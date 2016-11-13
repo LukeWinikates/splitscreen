@@ -24,7 +24,9 @@ fromUrl s = Ok model
 
 toUrl : Model -> String
 toUrl model =
-  "#/" ++ String.join "," model.pages
+  case model.pages of
+    [] -> "#"
+    _ -> "#/pages?" ++  String.join "," model.pages
 
 urlParser : Navigation.Parser (Result String Model)
 urlParser =
