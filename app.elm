@@ -3,13 +3,38 @@ import Html.App as App
 import Html.Attributes exposing (placeholder, src, style)
 import Html.Events exposing (onInput, onClick, onSubmit)
 import String
-
+import Navigation
 
 main =
-  App.beginnerProgram { model = model, view = view, update = update }
+  Navigation.program urlParser
+  {
+  init = init
+     ,view = view
+    , update = update
+    , urlUpdate = urlUpdate
+    , subscriptions = subscriptions
+    }
 
 
--- MODEL
+init : Result String Model -> (Model, Cmd Msg)
+init result = urlUpdate result model
+
+fromUrl : String -> Result String Model
+fromUrl s = Ok model
+
+toUrl : Model -> String
+toUrl model =
+  "#/" ++ String.join "," model.pages
+
+urlParser : Navigation.Parser (Result String Model)
+urlParser =
+  Navigation.makeParser (fromUrl << .hash)
+
+urlUpdate : Result String Model -> Model -> (Model, Cmd Msg)
+urlUpdate result model = (model, Cmd.none)
+
+subscriptions model =
+  Sub.none
 
 type alias Model =
   { pages : List String,
@@ -20,7 +45,6 @@ model : Model
 model =
   { pages = [], currentText = "" }
 
-
 -- UPDATE
 
 type Msg
@@ -28,15 +52,19 @@ type Msg
   | Close String
   | Add
 
-update : Msg -> Model -> Model
+update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
-  case msg of
-    Change newContent ->
-      { model | currentText = newContent}
-    Add ->
-      { model | currentText = "", pages = model.currentText :: model.pages }
-    Close url ->
-      { model | pages = List.filter ((/=) url) model.pages }
+ let
+    newModel =
+      case msg of
+        Change newContent ->
+          { model | currentText = newContent}
+        Add ->
+          { model | currentText = "", pages = model.currentText :: model.pages }
+        Close url ->
+          { model | pages = List.filter ((/=) url) model.pages }
+  in
+      (newModel, Navigation.newUrl (toUrl newModel))
 
 -- VIEW
 
