@@ -1,6 +1,6 @@
-import Html exposing (Html, Attribute, div, input, text, button, form, iframe, header, body)
+import Html exposing (Attribute, Html, a, body, button, div, form, header, iframe, input, li, span, text, ul)
 import Html.App as App
-import Html.Attributes exposing (placeholder, src, style)
+import Html.Attributes exposing (href, placeholder, src, style)
 import Html.Events exposing (onInput, onClick, onSubmit)
 import String exposing (split, dropLeft, startsWith)
 import Navigation
@@ -95,15 +95,22 @@ update msg model =
 iframeView : String -> Html Msg
 iframeView url =
     div [style [("display", "inline-block") ]] [
-        header [onClick (Close url)] [text "x"]
-        ,iframe [src url, style [("height", "calc(100vh )"), ("width", "calc(50vw - 2px)"), ("overflow", "hidden"), ("border", "1px solid white")]] []
+        iframe [src url, style [("height", "calc(100vh )"), ("width", "calc(50vw - 2px)"), ("overflow", "hidden"), ("border", "1px solid white")]] []
     ]
+
+closableView : String -> Html Msg
+closableView url =
+        li [][a [onClick (Close url), href "#", style [("color", "#eee")]]
+        [span [] [text url ]
+        ,span [] [text " x"]]]
 
 view : Model -> Html Msg
 view model =
-  body [] [
-  form [onSubmit Add, style [("overflow", "hidden")]]
-    [ input [ placeholder "Page To Add", onInput Change ] [text model.currentText]
-      , button [] [text "Add"]
+  div [] [
+    header [style [("background-color", "#111"), ("color", "#eee"),("font-family", "Sans-seriff")]] [
+        form [onSubmit Add, style [("overflow", "hidden")]] [
+            input [ placeholder "Page To Add", onInput Change ] [text model.currentText]
+            , button [] [text "Add"]]
+        ,ul [] (List.map closableView model.pages)]
     , div [] (List.map iframeView model.pages)
-    ]]
+    ]
