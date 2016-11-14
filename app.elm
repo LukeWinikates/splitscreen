@@ -7,14 +7,14 @@ import Navigation
 import List exposing (filter, head)
 import Maybe exposing (withDefault)
 
-pagesFromQueryString : String -> Maybe String
-pagesFromQueryString s =
-  s
+valueFromQueryString : String -> String -> Maybe String
+valueFromQueryString key queryString =
+  queryString
     |> dropLeft 2 -- drop '#?'
     |> split "&"
-    |> filter (\term -> startsWith "pages=" term)
+    |> filter (\term -> startsWith (key++"=") term)
     |> head
-    |> Maybe.map (dropLeft 6) -- drop 'foo='
+    |> Maybe.map (dropLeft ((String.length key) + 1))
 
 main =
   Navigation.program urlParser
@@ -29,20 +29,21 @@ main =
 
 init : Result String Model -> (Model, Cmd Msg)
 init result =
-    let _ = (Debug.log "pages" model.pages) in
+    let _ = (Debug.log "currentText" model.currentText) in
         urlUpdate result model
 
 fromUrl : String -> Result String Model
 fromUrl s =
-    case pagesFromQueryString s of
-     Nothing ->  Ok model
-     Just pages -> Ok { model | pages = String.split "," pages }
+--    let current = Maybe.withDefault "" (valueFromQueryString "currentText" s) in
+        case valueFromQueryString "pages" s of
+            Nothing ->  Ok model
+            Just pages -> Ok { model | pages = String.split "," pages}
 
 toUrl : Model -> String
 toUrl model =
   case model.pages of
     [] -> "#"
-    _ -> "#?pages=" ++  String.join "," model.pages
+    _ -> "#?pages=" ++  String.join "," model.pages -- ++ "&currentText=" ++ model.currentText
 
 urlParser : Navigation.Parser (Result String Model)
 urlParser =
@@ -52,7 +53,7 @@ urlUpdate : Result String Model -> Model -> (Model, Cmd Msg)
 urlUpdate result model =
   case result of
     Ok newModel ->
-      (newModel, Cmd.none)
+      ({ newModel | currentText = model.currentText}, Cmd.none)
     Err _ ->
       (model, Navigation.modifyUrl (toUrl model))
 
@@ -81,7 +82,7 @@ update msg model =
     newModel =
       case msg of
         Change newContent ->
-          { model | currentText = newContent}
+          { model | currentText = newContent }
         Add ->
           { model | currentText = "", pages = model.currentText :: model.pages }
         Close url ->
@@ -93,14 +94,14 @@ update msg model =
 
 iframeView : String -> Html Msg
 iframeView url =
-    div [] [
+    div [style [("display", "inline-block") ]] [
         header [onClick (Close url)] [text "x"]
-        ,iframe [src url, style [("height", "calc(100vh )"), ("width", "calc(100vw)"), ("overflow", "hidden") ]] []
+        ,iframe [src url, style [("height", "calc(100vh )"), ("width", "calc(50vw - 2px)"), ("overflow", "hidden"), ("border", "1px solid white")]] []
     ]
 
 view : Model -> Html Msg
 view model =
-  body [style [("overflow", "hidden")]] [
+  body [] [
   form [onSubmit Add, style [("overflow", "hidden")]]
     [ input [ placeholder "Page To Add", onInput Change ] [text model.currentText]
       , button [] [text "Add"]
