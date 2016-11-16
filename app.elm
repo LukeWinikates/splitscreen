@@ -1,11 +1,14 @@
-import Html exposing (Attribute, Html, a, body, button, div, form, header, iframe, input, li, span, text, ul)
+import Html exposing (Attribute, Html, a, body, button, div, form, h1, header, iframe, input, li, node, span, text, textarea, ul)
 import Html.App as App
-import Html.Attributes exposing (href, placeholder, src, style)
-import Html.Events exposing (onInput, onClick, onSubmit)
+import Html.Attributes exposing (class, href, placeholder, src, style, value)
+import Html.Events exposing (onInput, onClick, onSubmit, onMouseOver)
 import String exposing (split, dropLeft, startsWith)
 import Navigation
 import List exposing (filter, head)
 import Maybe exposing (withDefault)
+import Time exposing (Time, millisecond, second, every)
+import Mouse exposing (Position)
+import Http
 
 valueFromQueryString : String -> String -> Maybe String
 valueFromQueryString key queryString =
@@ -15,6 +18,7 @@ valueFromQueryString key queryString =
     |> filter (\term -> startsWith (key++"=") term)
     |> head
     |> Maybe.map (dropLeft ((String.length key) + 1))
+    |> Maybe.map Http.uriDecode
 
 main =
   Navigation.program urlParser
@@ -23,27 +27,25 @@ main =
      ,view = view
     , update = update
     , urlUpdate = urlUpdate
-    , subscriptions = subscriptions
+    , subscriptions = always Sub.none
     }
 
 
 init : Result String Model -> (Model, Cmd Msg)
 init result =
-    let _ = (Debug.log "currentText" model.currentText) in
-        urlUpdate result model
+        urlUpdate result newModel
 
 fromUrl : String -> Result String Model
 fromUrl s =
---    let current = Maybe.withDefault "" (valueFromQueryString "currentText" s) in
-        case valueFromQueryString "pages" s of
-            Nothing ->  Ok model
-            Just pages -> Ok { model | pages = String.split "," pages}
+    Ok { newModel | first = valueFromQueryString "first" s, second =  valueFromQueryString "second" s }
+
+accumParam : String -> String -> Maybe String -> String
+accumParam memo key value =
+    memo ++ withDefault "" (Maybe.map (Http.uriEncode >> ((++) (key ++ "="))) value)
 
 toUrl : Model -> String
 toUrl model =
-  case model.pages of
-    [] -> "#"
-    _ -> "#?pages=" ++  String.join "," model.pages -- ++ "&currentText=" ++ model.currentText
+   "#?" |> \a -> accumParam a "first" model.first |> \a -> accumParam a "&second" model.second
 
 urlParser : Navigation.Parser (Result String Model)
 urlParser =
@@ -53,64 +55,58 @@ urlUpdate : Result String Model -> Model -> (Model, Cmd Msg)
 urlUpdate result model =
   case result of
     Ok newModel ->
-      ({ newModel | currentText = model.currentText}, Cmd.none)
+      (newModel, Cmd.none)
     Err _ ->
       (model, Navigation.modifyUrl (toUrl model))
 
-subscriptions model =
-  Sub.none
-
 type alias Model =
-  { pages : List String,
-    currentText : String
+  { first : Maybe String,
+    second : Maybe String
   }
 
-model : Model
-model =
-  { pages = [], currentText = "" }
+newModel : Model
+newModel =
+  { first = Nothing, second = Nothing  }
 
 -- UPDATE
 
 type Msg
-  = Change String
-  | Close String
-  | Add
+  = ChangeFirst String
+  | ChangeSecond String
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
  let
     newModel =
       case msg of
-        Change newContent ->
-          { model | currentText = newContent }
-        Add ->
-          { model | currentText = "", pages = model.currentText :: model.pages }
-        Close url ->
-          { model | pages = List.filter ((/=) url) model.pages }
+        ChangeFirst newContent ->
+          { model | first = Just newContent }
+        ChangeSecond newContent ->
+          { model | second = Just newContent }
   in
       (newModel, Navigation.newUrl (toUrl newModel))
 
 -- VIEW
 
-iframeView : String -> Html Msg
-iframeView url =
-    div [style [("display", "inline-block") ]] [
-        iframe [src url, style [("height", "calc(100vh )"), ("width", "calc(50vw - 2px)"), ("overflow", "hidden"), ("border", "1px solid white")]] []
-    ]
-
-closableView : String -> Html Msg
-closableView url =
-        li [][a [onClick (Close url), href "#", style [("color", "#eee")]]
-        [span [] [text url ]
-        ,span [] [text " x"]]]
+iframeView : (String -> Msg) -> String -> Html Msg
+iframeView f url =
+    let positioning = [("height", "calc(100vh)"), ("width", "calc(50vw - 1px)"), ("border", "none"), ("border-right", "1px solid white")] in
+        div [style [("display", "inline-block"), ("position", "relative") ]] [
+            iframe [src url, style positioning] []
+            ,input [class "show-on-hover"
+--                , placeholder "type a url here..."
+            , value url
+            ,onInput f
+                , style (List.append [("position", "absolute"), ("top", "0"), ("left", "0"), ("text-align", "center"), ("font-size", "24pt")] positioning)]
+                    []
+        ]
 
 view : Model -> Html Msg
 view model =
-  div [] [
-    header [style [("background-color", "#111"), ("color", "#eee"),("font-family", "Sans-seriff")]] [
-        form [onSubmit Add, style [("overflow", "hidden")]] [
-            input [ placeholder "Page To Add", onInput Change ] [text model.currentText]
-            , button [] [text "Add"]]
-        ,ul [] (List.map closableView model.pages)]
-    , div [] (List.map iframeView model.pages)
-    ]
+
+       div [] [
+        node "style" [] [text ".show-on-hover { transition: all 1s; background-color: transparent; color: transparent; }
+         .show-on-hover:hover { background-color: #ccc; color: #111 }"]
+        , iframeView ChangeFirst (withDefault "" model.first)
+        ,iframeView ChangeSecond (withDefault "" model.second)
+       ]
