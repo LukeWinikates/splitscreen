@@ -90,7 +90,7 @@ update msg model =
 
 iframeView : (String -> Msg) -> String -> Html Msg
 iframeView f url =
-    let positioning = [("height", "calc(100vh)"), ("width", "calc(50vw - 1px)"), ("border", "none"), ("border-right", "1px solid white")] in
+    let positioning = [("height", "calc(100vh - 20px)"), ("width", "calc(50vw - 10px)"), ("border", "none"), ("border-right", "1px solid white")] in
         div [style [("display", "inline-block"), ("position", "relative") ]] [
             iframe [src url, style positioning] []
             ,input [class "show-on-hover"
