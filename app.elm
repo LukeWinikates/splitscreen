@@ -94,7 +94,7 @@ iframeView f url =
         div [style [("display", "inline-block"), ("position", "relative") ]] [
             iframe [src url, style positioning] []
             ,input [class "show-on-hover"
---                , placeholder "type a url here..."
+                , placeholder "type a url here..."
             , value url
             ,onInput f
                 , style (List.append [("position", "absolute"), ("top", "0"), ("left", "0"), ("text-align", "center"), ("font-size", "24pt")] positioning)]
