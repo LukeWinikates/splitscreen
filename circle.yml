@@ -3,6 +3,10 @@ machine:
     version: v6.1.0
 
 dependencies:
+  cache_directories:
+    - "libsysconfcpus"
+    - "elm-stuff/packages"
+    - "test/elm-stuff/packages"
   override:
     - if [ ! -d libsysconfcpus ]; then git clone https://github.com/obmarg/libsysconfcpus.git; fi
     - cd libsysconfcpus && ./configure && make && sudo make install
@@ -14,12 +18,12 @@ dependencies:
 
 test:
   override:
-    - elm-test
+    - sysconfcpus -n 1 elm-test
 
 deployment:
   production:
     branch: master
     commands:
       - mkdir -p build
-      - elm-make src/Splitscreen.elm --output build/index.html
+      - sysconfcpus -n 1 elm-make src/Splitscreen.elm --output build/index.html
       - aws s3 sync build/index.html s3://splitscreen.lukewinikates.com
