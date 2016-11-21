@@ -25,4 +25,4 @@ deployment:
     commands:
       - mkdir -p build
       - sysconfcpus -n 1 elm-make src/Splitscreen.elm --output build/index.html
-      - aws s3 sync build/* s3://splitscreen.lukewinikates.com
+      - aws s3 sync build s3://splitscreen.lukewinikates.com
