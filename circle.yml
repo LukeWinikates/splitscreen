@@ -6,7 +6,7 @@ dependencies:
   override:
     - if [ ! -d libsysconfcpus ]; then git clone https://github.com/obmarg/libsysconfcpus.git; fi
     - cd libsysconfcpus && ./configure && make && sudo make install
-    - ./libsysconfcpus/sysconfcpus -n 1
+    - sysconfcpus -n 1
     - npm install -g elm
     - npm install -g elm-test
     - elm package install -y
