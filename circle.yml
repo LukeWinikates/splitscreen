@@ -6,7 +6,7 @@ dependencies:
   cache_directories:
     - "libsysconfcpus"
     - "elm-stuff/packages"
-    - "test/elm-stuff/packages"
+    - "tests/elm-stuff/packages"
   override:
     - if [ ! -d libsysconfcpus ]; then git clone https://github.com/obmarg/libsysconfcpus.git; fi
     - cd libsysconfcpus && ./configure && make && sudo make install
