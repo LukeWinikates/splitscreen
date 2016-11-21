@@ -1,0 +1,22 @@
+machine:
+  node:
+    version: v6.1.0
+
+dependencies:
+  override:
+    - npm install -g elm
+    - npm install -g elm-test
+    - elm package install -y
+    - (cd tests; elm package install -y)
+
+test:
+  override:
+    - elm-test
+
+deployment:
+  production:
+    branch: master
+    commands:
+      - mkdir -p build
+      - elm-make src/Splitscreen.elm build/index.html
+      - aws s3 sync build/index.html s3://splitscreen.lukewinikates.com
