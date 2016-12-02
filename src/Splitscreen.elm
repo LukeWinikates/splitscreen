@@ -6,7 +6,9 @@ import Html.Events exposing (onInput, onClick, onSubmit, onMouseOver)
 import Navigation
 import List exposing (filter, head)
 import Maybe exposing (withDefault)
+import Dict
 import Splitscreen.Model exposing (Model, fromUrl, toUrl)
+
 
 main =
     Navigation.program UrlChange
@@ -18,22 +20,23 @@ main =
 
 
 init : Navigation.Location -> ( Model, Cmd Msg )
-init location = (fromUrl location.hash, Cmd.none)
+init location =
+    ( fromUrl location.hash, Cmd.none )
+
 
 type Msg
-    = ChangeFirst String
-    | ChangeSecond String
+    = Change String String
     | UrlChange Navigation.Location
+
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        ChangeFirst newContent ->
-            ({ model | first = Just newContent }, Navigation.modifyUrl (toUrl { model | first = Just newContent }))
-        ChangeSecond newContent ->
-            ({ model | second = Just newContent }, Navigation.modifyUrl (toUrl { model | second = Just newContent }))
+        Change key newContent ->
+            let newModel = { model | urls =  Dict.insert key newContent model.urls } in
+                (newModel , Navigation.modifyUrl (toUrl newModel) )
         UrlChange location ->
-            (model, Cmd.none)
+            ( model, Cmd.none )
 
 
 iframeView : (String -> Msg) -> String -> Html Msg
@@ -59,6 +62,6 @@ view : Model -> Html Msg
 view model =
     div []
         [ node "style" [] [ text ".show-on-hover { transition: all 1s; background-color: transparent; color: transparent; }\n         .show-on-hover:hover { background-color: #ccc; color: #111 }" ]
-        , iframeView ChangeFirst (withDefault "" model.first)
-        , iframeView ChangeSecond (withDefault "" model.second)
+        , iframeView (Change "x0y0") (withDefault "" (Dict.get "x0y0" model.urls))
+        , iframeView (Change "x1y0") (withDefault "" (Dict.get "x1y0" model.urls))
         ]
