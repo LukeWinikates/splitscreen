@@ -20,9 +20,8 @@ valueFromQueryString key queryString =
         |> withDefault ""
 
 
-parseLayout : String -> { x : Int, y : Int }
-parseLayout _ =
-    { x = 2, y = 1 }
+parseLayout : String -> List Int
+parseLayout _ =  [1, 1]
 
 tupleFromSplitting s =
     case split "=" s of
@@ -55,17 +54,17 @@ accumParam memo key value =
 
 toUrl : Model -> String
 toUrl model =
-    "#?layout=x2y1&" ++ (join "&" <|
+    "#?layout=11&" ++ (join "&" <|
      List.map (\(pos, url) -> pos ++ "=" ++ (Http.encodeUri url)) <|
     (toList model.urls))
 
 
 type alias Model =
-    { layout : { x : Int, y : Int }
+    { layout : List Int
     , urls : Dict String String
     }
 
 
 newModel : Model
 newModel =
-    { layout = { x = 1, y = 2 }, urls = Dict.empty }
+    { layout = [1,1], urls = Dict.empty }
