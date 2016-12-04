@@ -36,7 +36,6 @@ parseUrls queryString =
         |> dropLeft 2 -- drop '#?'
         |> split "&"
         |> filter (\term -> not (startsWith "layout=" term))
-        |> Debug.log "banana"
         |> List.map tupleFromSplitting
         |> fromList
 
