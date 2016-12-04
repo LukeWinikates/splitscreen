@@ -10,8 +10,10 @@ import Http
 valueFromQueryString : String -> String -> String
 valueFromQueryString key queryString =
     queryString
-        |> dropLeft 2 -- drop '#?'
-        |> split "&"
+        |> dropLeft 2
+        -- drop '#?'
+        |>
+            split "&"
         |> filter (\term -> startsWith (key ++ "=") term)
         |> head
         |> Maybe.map (dropLeft ((String.length key) + 1))
@@ -21,23 +23,35 @@ valueFromQueryString key queryString =
 
 
 parseLayout : String -> List Int
-parseLayout _ =  [1, 1]
+parseLayout _ =
+    [ 1, 1 ]
+
 
 tupleFromSplitting s =
     case split "=" s of
-        [a, b] -> case Http.decodeUri b of
-           Just url -> (a, url)
-           _ -> ("", "")
-        _ -> ("", "")
+        [ a, b ] ->
+            case Http.decodeUri b of
+                Just url ->
+                    ( a, url )
+
+                _ ->
+                    ( "", "" )
+
+        _ ->
+            ( "", "" )
+
 
 parseUrls : String -> Dict String String
 parseUrls queryString =
     queryString
-        |> dropLeft 2 -- drop '#?'
-        |> split "&"
+        |> dropLeft 2
+        -- drop '#?'
+        |>
+            split "&"
         |> filter (\term -> not (startsWith "layout=" term))
         |> List.map tupleFromSplitting
         |> fromList
+
 
 fromUrl : String -> Model
 fromUrl s =
@@ -53,9 +67,11 @@ accumParam memo key value =
 
 toUrl : Model -> String
 toUrl model =
-    "#?layout=11&" ++ (join "&" <|
-     List.map (\(pos, url) -> pos ++ "=" ++ (Http.encodeUri url)) <|
-    (toList model.urls))
+    "#?layout=11&"
+        ++ (join "&" <|
+                List.map (\( pos, url ) -> pos ++ "=" ++ (Http.encodeUri url)) <|
+                    (toList model.urls)
+           )
 
 
 type alias Model =
@@ -66,4 +82,4 @@ type alias Model =
 
 newModel : Model
 newModel =
-    { layout = [1,1], urls = Dict.empty }
+    { layout = [ 1, 1 ], urls = Dict.empty }

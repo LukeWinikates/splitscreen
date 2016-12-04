@@ -15,7 +15,7 @@ all =
             [ test "creating an object from the url hash fragment" <|
                 \() ->
                     Expect.equal
-                        { layout = [1, 1] , urls = fromList [ ( "x0y0", "http://jenkins-ci.org" ), ( "x1y0", "http://concourse.ci" ) ] }
+                        { layout = [ 1, 1 ], urls = fromList [ ( "x0y0", "http://jenkins-ci.org" ), ( "x1y0", "http://concourse.ci" ) ] }
                         (fromUrl "#?layout=11&x0y0=http%3A%2F%2Fjenkins-ci.org&x1y0=http%3A%2F%2Fconcourse.ci")
             ]
         , describe "encoding"
@@ -24,7 +24,7 @@ all =
                     Expect.equal
                         "#?layout=11&x0y0=http%3A%2F%2Fjenkins-ci.org&x1y0=http%3A%2F%2Fconcourse.ci"
                         (toUrl
-                            { layout = [1 , 1]
+                            { layout = [ 1, 1 ]
                             , urls = fromList [ ( "x0y0", "http://jenkins-ci.org" ), ( "x1y0", "http://concourse.ci" ) ]
                             }
                         )

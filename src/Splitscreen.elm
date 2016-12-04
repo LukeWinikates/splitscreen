@@ -6,7 +6,7 @@ import Html.Events exposing (onInput, onClick, onSubmit, onMouseOver)
 import Navigation
 import List exposing (filter, head)
 import Maybe exposing (withDefault)
-import Dict
+import Dict exposing (toList)
 import Splitscreen.Model exposing (Model, fromUrl, toUrl)
 
 
@@ -33,14 +33,29 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Change key newContent ->
-            let newModel = { model | urls =  Dict.insert key newContent model.urls } in
-                (newModel , Navigation.modifyUrl (toUrl newModel) )
+            let
+                newModel =
+                    { model | urls = Dict.insert key newContent model.urls }
+            in
+                ( newModel, Navigation.modifyUrl (toUrl newModel) )
+
         UrlChange location ->
             ( model, Cmd.none )
 
 
-iframeView : (String -> Msg) -> String -> Html Msg
-iframeView f url =
+
+--type alias Layout = List List (Int, Int)
+
+
+modelToLayout : Model -> List (List ( Int, Int ))
+modelToLayout model =
+    List.indexedMap
+        (\colNum rowCount -> List.map ((,) colNum) (List.range 0 (rowCount - 1)))
+        model.layout
+
+
+iframeView : String -> String -> Html Msg
+iframeView key url =
     let
         positioning =
             [ ( "height", "calc(100vh - 20px)" ), ( "width", "calc(50vw - 10px)" ), ( "border", "none" ), ( "border-right", "1px solid white" ) ]
@@ -51,17 +66,37 @@ iframeView f url =
                 [ class "show-on-hover"
                 , placeholder "type a url here..."
                 , value url
-                , onInput f
+                , onInput (Change key)
                 , style (List.append [ ( "position", "absolute" ), ( "top", "0" ), ( "left", "0" ), ( "text-align", "center" ), ( "font-size", "24pt" ) ] positioning)
                 ]
                 []
             ]
 
 
+columnView : Model -> List (List ( Int, Int )) -> Html Msg
+columnView model layout =
+    span []
+        (List.map
+            (\col ->
+                span []
+                    (List.map
+                        (\( x, y ) ->
+                            let
+                                key =
+                                    "x" ++ toString x ++ "y" ++ toString y
+                            in
+                                iframeView key (withDefault "" (Dict.get key model.urls))
+                        )
+                        col
+                    )
+            )
+            layout
+        )
+
+
 view : Model -> Html Msg
 view model =
     div []
         [ node "style" [] [ text ".show-on-hover { transition: all 1s; background-color: transparent; color: transparent; }\n         .show-on-hover:hover { background-color: #ccc; color: #111 }" ]
-        , iframeView (Change "x0y0") (withDefault "" (Dict.get "x0y0" model.urls))
-        , iframeView (Change "x1y0") (withDefault "" (Dict.get "x1y0" model.urls))
+        , columnView model (modelToLayout model)
         ]
