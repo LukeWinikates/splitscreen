@@ -16,6 +16,7 @@ import Splitscreen.Model exposing (Model, fromUrl, toUrl)
 -- TODO: add buttons that add panels to the layout
 -- TODO: can't scroll -- make the textbox smaller (e.g. like an address bar?)
 
+
 main =
     Navigation.program UrlChange
         { init = init
@@ -59,13 +60,14 @@ modelToLayout model =
         (\colNum rowCount -> List.map ((,) colNum) (List.range 0 (rowCount - 1)))
         model.layout
 
+
 iframeView : String -> String -> Html Msg
 iframeView key url =
     let
         positioning =
-            [ ( "height", "calc(100vh - 20px)" ), ( "border", "none" ), ("width", "100%")]
+            [ ( "height", "calc(100vh - 20px)" ), ( "border", "none" ), ( "width", "100%" ) ]
     in
-        div [ style [( "position", "relative" ) ] ]
+        div [ style [ ( "position", "relative" ) ] ]
             [ iframe [ src url, style positioning ] []
             , input
                 [ class "show-on-hover"
@@ -80,10 +82,10 @@ iframeView key url =
 
 columnView : Model -> List (List ( Int, Int )) -> Html Msg
 columnView model layout =
-    div [style [( "display", "flex" ), ( "border-right", "1px solid white" ), ("width", "calc(100vw - 10px)") ]]
+    div [ style [ ( "display", "flex" ), ( "border-right", "1px solid white" ), ( "width", "calc(100vw - 10px)" ) ] ]
         (List.map
             (\col ->
-                span [style [("flex-grow", "1")]]
+                span [ style [ ( "flex-grow", "1" ) ] ]
                     (List.map
                         (\( x, y ) ->
                             let

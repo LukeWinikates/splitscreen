@@ -2,7 +2,7 @@ module Splitscreen.Model exposing (..)
 
 import List exposing (filter, head)
 import Maybe exposing (withDefault)
-import String exposing (split, dropLeft, startsWith, join)
+import String exposing (dropLeft, join, length, split, startsWith)
 import Dict exposing (Dict, fromList, toList)
 import Http
 
@@ -10,10 +10,8 @@ import Http
 valueFromQueryString : String -> String -> String
 valueFromQueryString key queryString =
     queryString
-        |> dropLeft 2
-        -- drop '#?'
-        |>
-            split "&"
+        |> dropLeft (length "#?")
+        |> split "&"
         |> filter (\term -> startsWith (key ++ "=") term)
         |> head
         |> Maybe.map (dropLeft ((String.length key) + 1))
@@ -23,8 +21,8 @@ valueFromQueryString key queryString =
 
 
 parseLayout : String -> List Int
-parseLayout _ =
-    [ 1, 1 ]
+parseLayout =
+    String.toList >> List.map (String.fromChar >> String.toInt >> (Result.withDefault 0))
 
 
 tupleFromSplitting s =
@@ -44,10 +42,8 @@ tupleFromSplitting s =
 parseUrls : String -> Dict String String
 parseUrls queryString =
     queryString
-        |> dropLeft 2
-        -- drop '#?'
-        |>
-            split "&"
+        |> dropLeft (length "#?")
+        |> split "&"
         |> filter (\term -> not (startsWith "layout=" term))
         |> List.map tupleFromSplitting
         |> fromList
@@ -65,9 +61,16 @@ accumParam memo key value =
     memo ++ withDefault "" (Maybe.map (Http.encodeUri >> ((++) (key ++ "="))) value)
 
 
+encodeLayout : List Int -> String
+encodeLayout =
+    (List.map toString) >> String.join ""
+
+
 toUrl : Model -> String
 toUrl model =
-    "#?layout=11&"
+    "#?layout="
+        ++ (encodeLayout model.layout)
+        ++ "&"
         ++ (join "&" <|
                 List.map (\( pos, url ) -> pos ++ "=" ++ (Http.encodeUri url)) <|
                     (toList model.urls)
