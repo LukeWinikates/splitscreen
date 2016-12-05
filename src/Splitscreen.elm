@@ -11,7 +11,6 @@ import Splitscreen.Model exposing (Model, fromUrl, toUrl)
 
 
 -- TODO: test onload handler
--- TODO: add actual generic layout handling, math
 -- TODO: make code generally cleaner
 -- TODO: add buttons that add panels to the layout
 -- TODO: can't scroll -- make the textbox smaller (e.g. like an address bar?)
@@ -65,27 +64,27 @@ iframeView : String -> String -> Html Msg
 iframeView key url =
     let
         positioning =
-            [ ( "height", "calc(100vh - 20px)" ), ( "border", "none" ), ( "width", "100%" ) ]
+            [ ( "border", "none" ), ( "width", "100%" ), ("height", "100%"), ("display", "block"), ("position", "absolute") ]
     in
-        div [ style [ ( "position", "relative" ) ] ]
+        div [ style [ ( "position", "relative" ), ("flex-grow", "1") ] ]
             [ iframe [ src url, style positioning ] []
             , input
                 [ class "show-on-hover"
                 , placeholder "type a url here..."
                 , value url
                 , onInput (Change key)
-                , style (List.append [ ( "position", "absolute" ), ( "top", "0" ), ( "left", "0" ), ( "text-align", "center" ), ( "font-size", "24pt" ) ] positioning)
+                , style (List.append [ ( "top", "0" ), ( "left", "0" ), ( "text-align", "center" ), ( "font-size", "24pt" ) ] positioning)
                 ]
                 []
             ]
 
 
-columnView : Model -> List (List ( Int, Int )) -> Html Msg
-columnView model layout =
-    div [ style [ ( "display", "flex" ), ( "border-right", "1px solid white" ), ( "width", "calc(100vw - 10px)" ) ] ]
+layoutView : Model -> List (List ( Int, Int )) -> Html Msg
+layoutView model layout =
+    div [ style [ ( "display", "flex" ), ( "border-right", "1px solid white" ), ( "width", "calc(100vw - 10px)")] ]
         (List.map
             (\col ->
-                span [ style [ ( "flex-grow", "1" ) ] ]
+                span [ style [ ( "flex-grow", "1" ), ("display", "flex"), ("flex-direction", "column"), ( "height", "calc(100vh - 20px)") ] ]
                     (List.map
                         (\( x, y ) ->
                             let
@@ -104,6 +103,7 @@ columnView model layout =
 view : Model -> Html Msg
 view model =
     div []
-        [ node "style" [] [ text ".show-on-hover { transition: all 1s; background-color: transparent; color: transparent; }\n         .show-on-hover:hover { background-color: #ccc; color: #111 }" ]
-        , columnView model (modelToLayout model)
+        [ node "style" [] [ text (".show-on-hover { transition: all 1s; background-color: transparent; color: transparent; }\n" ++
+                 ".show-on-hover:hover { background-color: #ccc; color: #111 }") ]
+        , layoutView model (modelToLayout model)
         ]
