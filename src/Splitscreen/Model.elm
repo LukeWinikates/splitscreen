@@ -16,8 +16,8 @@ valueFromQueryString key queryString =
         |> head
         |> Maybe.map (dropLeft ((String.length key) + 1))
         |> Maybe.map Http.decodeUri
-        |> Maybe.map (withDefault "")
-        |> withDefault ""
+        |> Maybe.map (withDefault "") -- TODO: remove these withdefaults and let it be a maybe?, then have fromUrl do the defaulting
+        |> withDefault "11"
 
 
 parseLayout : String -> List Int
