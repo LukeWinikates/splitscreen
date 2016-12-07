@@ -10,11 +10,11 @@ import Dict exposing (toList)
 import Splitscreen.Model exposing (Model, fromUrl, toUrl)
 
 
--- TODO: test onload handler
+-- TODO: test onload handler, feedback for failures to load
 -- TODO: make code generally cleaner
--- TODO: add buttons that add panels to the layout
--- TODO: can't scroll -- make the textbox smaller (e.g. like an address bar?)
-
+-- TODO: add button that adds a column to the layout
+-- TODO: harmonize different data structures for "layout" (list of ints, list of list of (int, int), string representation)
+-- TODO: add a "play" button that turns columns into a carousel (possibly using css animations)
 
 main =
     Navigation.program UrlChange
@@ -33,6 +33,7 @@ init location =
 type Msg
     = Change String String
     | UrlChange Navigation.Location
+    | Layout (List Int)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -42,6 +43,13 @@ update msg model =
             let
                 newModel =
                     { model | urls = Dict.insert key newContent model.urls }
+            in
+                ( newModel, Navigation.modifyUrl (toUrl newModel) )
+
+        Layout newLayout ->
+            let
+                newModel =
+                    { model | layout = newLayout }
             in
                 ( newModel, Navigation.modifyUrl (toUrl newModel) )
 
@@ -73,19 +81,23 @@ iframeView key url =
                 , placeholder "type a url here..."
                 , value url
                 , onInput (Change key)
-                , style (List.append [ ( "top", "0" ), ( "left", "0" ), ( "text-align", "center" ), ( "font-size", "24pt" ) ] positioning)
+                , style [ ( "top", "0" ), ( "left", "0" ), ( "text-align", "center" ), ( "font-size", "24pt" ), ("position", "absolute"), ("width", "100%"), ("border", "none"), ("padding", "0")]
                 ]
                 []
             ]
 
+appendToCol column modelLayout =
+    List.indexedMap
+        (\index count -> count + if index == column then 1 else 0)
+        modelLayout
 
 layoutView : Model -> List (List ( Int, Int )) -> Html Msg
 layoutView model layout =
     div [ style [ ( "display", "flex" ), ( "border-right", "1px solid white" ), ( "width", "calc(100vw - 10px)")] ]
-        (List.map
-            (\col ->
-                span [ style [ ( "flex-grow", "1" ), ("display", "flex"), ("flex-direction", "column"), ( "height", "calc(100vh - 20px)") ] ]
-                    (List.map
+        (List.indexedMap
+            (\index  col ->
+                span [ style [ ( "flex-grow", "1" ), ("display", "flex"), ("flex-direction", "column"), ( "height", "calc(100vh - 10px)") ] ]
+                    (List.append (List.map
                         (\( x, y ) ->
                             let
                                 key =
@@ -95,6 +107,10 @@ layoutView model layout =
                         )
                         col
                     )
+                    [button [
+                    onClick (Layout (appendToCol index model.layout))
+                                 , style [("bottom", "0"), ("width", "100%")]]
+                                 [text "+"]])
             )
             layout
         )
