@@ -7,7 +7,7 @@ import Navigation
 import List exposing (filter, head)
 import Maybe exposing (withDefault)
 import Dict exposing (toList)
-import Splitscreen.Model exposing (Model, fromUrl, toUrl)
+import Splitscreen.Model exposing (Model, appendToCol, fromUrl, modelToLayout, removeFromCol, toUrl)
 
 
 -- TODO: test onload handler, feedback for failures to load
@@ -33,28 +33,20 @@ init location =
 type Msg
     = Change String String
     | UrlChange Navigation.Location
-    | Layout (List Int)
+    | LayoutChange (List Int)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    let wrap model = (model, (model |> toUrl |> Navigation.modifyUrl)) in
+    let wrap model = (model, model |> toUrl |> Navigation.modifyUrl) in
         case msg of
             Change key newContent ->
                 wrap { model | urls = Dict.insert key newContent model.urls }
-            Layout newLayout ->
+            LayoutChange newLayout ->
                 wrap { model | layout = newLayout }
             UrlChange location ->
                 ( model, Cmd.none )
 
---type alias Layout = List List (Int, Int)
-
-
-modelToLayout : Model -> List (List ( Int, Int ))
-modelToLayout model =
-    List.indexedMap
-        (\colNum rowCount -> List.map ((,) colNum) (List.range 0 (rowCount - 1)))
-        model.layout
 
 
 iframeView : String -> String -> Html Msg
@@ -74,29 +66,6 @@ iframeView key url =
                 ]
                 []
             ]
-
-
-appendToCol column modelLayout =
-    List.indexedMap
-        (\index count ->
-            count
-                + if index == column then
-                    1
-                  else
-                    0
-        )
-        modelLayout
-
-removeFromCol column modelLayout =
-    List.indexedMap
-        (\index count ->
-            count
-                + if index == column then
-                    -1
-                  else
-                    0
-        )
-        modelLayout
 
 
 layoutView : Model -> List (List ( Int, Int )) -> Html Msg
@@ -119,12 +88,12 @@ layoutView model layout =
                             )
                             [div []
                             [ button
-                                [ onClick (Layout (removeFromCol index model.layout))
+                                [ onClick (LayoutChange (removeFromCol index model.layout))
                                 , style [( "width", "5em" ), ("display", "inline-block") ]
                                 ]
                                 [ text "-" ]
                              , button
-                                [ onClick (Layout (appendToCol index model.layout))
+                                [ onClick (LayoutChange (appendToCol index model.layout))
                                 , style [( "width", "5em" ) , ("display", "inline-block")]
                                 ]
                                 [ text "+" ]
@@ -135,13 +104,13 @@ layoutView model layout =
                 layout
             )
             [div [] [ button
-                [ onClick (Layout (List.take ((List.length model.layout) - 1) model.layout ))
+                [ onClick (LayoutChange (List.take ((List.length model.layout) - 1) model.layout ))
                 , style [ ( "right", "0" ), ("width", "100%")]
                 ]
                 [ text "-" ]
                 ,
                 button
-                [ onClick (Layout (List.append model.layout [ 1 ]))
+                [ onClick (LayoutChange (List.append model.layout [ 1 ]))
                 , style [ ( "right", "0" ), ("width", "100%")]
                 ]
                 [ text "+" ]

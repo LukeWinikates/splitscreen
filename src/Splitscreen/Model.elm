@@ -86,3 +86,34 @@ type alias Model =
 newModel : Model
 newModel =
     { layout = [ 1, 1 ], urls = Dict.empty }
+
+--type alias Layout = List List (Int, Int)
+
+
+modelToLayout : Model -> List (List ( Int, Int ))
+modelToLayout model =
+    List.indexedMap
+        (\colNum rowCount -> List.map ((,) colNum) (List.range 0 (rowCount - 1)))
+        model.layout
+
+appendToCol column modelLayout =
+    List.indexedMap
+        (\index count ->
+            count
+                + if index == column then
+                    1
+                  else
+                    0
+        )
+        modelLayout
+
+removeFromCol column modelLayout =
+    List.indexedMap
+        (\index count ->
+            count
+                + if index == column then
+                    -1
+                  else
+                    0
+        )
+        modelLayout
