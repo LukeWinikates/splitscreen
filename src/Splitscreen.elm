@@ -1,13 +1,17 @@
 module Splitscreen exposing (..)
 
 import Html exposing (Attribute, Html, a, body, button, div, form, h1, header, iframe, input, li, node, span, text, textarea, ul)
-import Html.Attributes exposing (class, href, placeholder, src, style, value)
+import Html.Attributes exposing (href, placeholder, src, style, value)
 import Html.Events exposing (onInput, onClick, onSubmit, onMouseOver)
 import Navigation
 import List exposing (filter, head)
 import Maybe exposing (withDefault)
 import Dict exposing (toList)
 import Splitscreen.Model exposing (Model, appendToCol, fromUrl, key, modelToLayout, removeFromCol, toUrl, urlFor)
+import Css exposing (Mixin, absolute, backgroundColor, block, border, color, display, height, hex, hover, none, pct, position, property, pt, stylesheet, transparent, width, (.))
+import Css.Namespace exposing (namespace)
+import Css.Helpers
+import Html.CssHelpers
 
 
 -- TODO: test onload handler, feedback for failures to load
@@ -54,23 +58,47 @@ update msg model =
                 ( model, Cmd.none )
 
 
+type CssClasses
+    = UrlContent
+    | ShowOnHover
+
+
+css =
+    (stylesheet << namespace "splitscreen")
+        [ (.) UrlContent
+            [ border (pt 0)
+            , width (pct 100)
+            , height (pct 100)
+            , display block
+            , position absolute
+            ]
+        , (.) ShowOnHover
+            [ property "transition" "1s"
+            , backgroundColor transparent
+            , color transparent
+            , hover
+                [ backgroundColor (hex "ccc"), color (hex "111") ]
+            ]
+        ]
+
+
+{ id, class, classList } =
+    Html.CssHelpers.withNamespace "splitscreen"
+
+
 iframeView : ( Int, Int ) -> String -> Html Msg
 iframeView coord url =
-    let
-        positioning =
-            [ ( "border", "none" ), ( "width", "100%" ), ( "height", "100%" ), ( "display", "block" ), ( "position", "absolute" ) ]
-    in
-        div [ style [ ( "position", "relative" ), ( "flex-grow", "1" ) ] ]
-            [ iframe [ src url, style positioning ] []
-            , input
-                [ class "show-on-hover"
-                , placeholder "type a url here..."
-                , value url
-                , onInput (coord |> key |> Change)
-                , style [ ( "top", "0" ), ( "left", "0" ), ( "text-align", "center" ), ( "font-size", "24pt" ), ( "position", "absolute" ), ( "width", "100%" ), ( "border", "none" ), ( "padding", "0" ) ]
-                ]
-                []
+    div [ style [ ( "position", "relative" ), ( "flex-grow", "1" ) ] ]
+        [ iframe [ src url, class [ UrlContent ] ] []
+        , input
+            [ class [ ShowOnHover ]
+            , placeholder "type a url here..."
+            , value url
+            , onInput (coord |> key |> Change)
+            , style [ ( "top", "0" ), ( "left", "0" ), ( "text-align", "center" ), ( "font-size", "24pt" ), ( "position", "absolute" ), ( "width", "100%" ), ( "border", "none" ), ( "padding", "0" ) ]
             ]
+            []
+        ]
 
 
 layoutView : Model -> List (List ( Int, Int )) -> Html Msg
@@ -118,19 +146,9 @@ layoutView model layout =
         )
 
 
-styleTag =
-    node "style"
-        []
-        [ text
-            (".show-on-hover { transition: all 1s; background-color: transparent; color: transparent; }\n"
-                ++ ".show-on-hover:hover { background-color: #ccc; color: #111 }"
-            )
-        ]
-
-
 view : Model -> Html Msg
 view model =
     div []
-        [ styleTag
+        [ node "style" [] [ text (.css (Css.compile [ css ]))]
         , layoutView model (modelToLayout model)
         ]
