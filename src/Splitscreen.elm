@@ -8,7 +8,7 @@ import List exposing (filter, head)
 import Maybe exposing (withDefault)
 import Dict exposing (toList)
 import Splitscreen.Model exposing (Model, appendToCol, fromUrl, key, modelToLayout, removeFromCol, toUrl, urlFor)
-import Css exposing (Mixin, absolute, backgroundColor, block, border, color, display, height, hex, hover, none, pct, position, property, pt, stylesheet, transparent, width, (.))
+import Css exposing (Mixin, absolute, backgroundColor, block, margin, border, borderColor, borderRadius, color, display, focus, height, hex, hover, none, pct, position, property, pt, px, stylesheet, textDecoration, transparent, width, (.), cursor, pointer, inlineBlock ,     textAlign ,center ,    fontSize)
 import Css.Namespace exposing (namespace)
 import Css.Helpers
 import Html.CssHelpers
@@ -19,7 +19,9 @@ import Html.CssHelpers
 -- TODO: harmonize different data structures for "layout" (list of ints, list of list of (int, int), string representation)
 -- TODO: add a "play" button that turns columns into a carousel (possibly using css animations)
 -- TODO: Make `urls` dictionary vs. UrlChange less confusing
-
+-- TODO: improve the spacing of the -/+ buttons. The top/bottom margin is uneven on the ones under the columns.
+--      ... could count pixels, but don't want to tightly couple it to the calc(100% - 20px) for the column height
+-- TODO: probably move CSS into its own module, if only because Css and Html imports don't play well together
 
 main =
     Navigation.program UrlChange
@@ -61,6 +63,7 @@ update msg model =
 type CssClasses
     = UrlContent
     | ShowOnHover
+    | Round
 
 
 css =
@@ -78,6 +81,22 @@ css =
             , color transparent
             , hover
                 [ backgroundColor (hex "ccc"), color (hex "111") ]
+            ]
+        , (.) Round
+            [ borderRadius (pct 100)
+            , property "transition" "background-color .3s"
+            , margin (px 1)
+            , borderColor (hex "111")
+            , height (px 25)
+            , width (px 25)
+            , backgroundColor (hex "ccc")
+            , focus [textDecoration none]
+            , cursor pointer
+            ,    display inlineBlock
+            ,     textAlign center
+             ,    fontSize (px 20)
+             , hover
+                     [ backgroundColor (hex "ddd")]
             ]
         ]
 
@@ -113,15 +132,15 @@ layoutView model layout =
                                 (\xy -> iframeView xy (urlFor model xy))
                                 col
                             )
-                            [ div []
-                                [ button
+                            [ div [style [("vertical-align", "center")]]
+                                [ a
                                     [ onClick (LayoutChange (removeFromCol index model.layout))
-                                    , style [ ( "width", "5em" ), ( "display", "inline-block" ) ]
+                                    , class [Round]
                                     ]
                                     [ text "-" ]
-                                , button
+                                , a
                                     [ onClick (LayoutChange (appendToCol index model.layout))
-                                    , style [ ( "width", "5em" ), ( "display", "inline-block" ) ]
+                                    , class [Round]
                                     ]
                                     [ text "+" ]
                                 ]
@@ -130,15 +149,15 @@ layoutView model layout =
                 )
                 layout
             )
-            [ div []
-                [ button
+            [ div [style [("width", "25px")]]
+                [ a
                     [ onClick (LayoutChange (List.take ((List.length model.layout) - 1) model.layout))
-                    , style [ ( "right", "0" ), ( "width", "100%" ) ]
+                    , class [Round]
                     ]
                     [ text "-" ]
-                , button
+                , a
                     [ onClick (LayoutChange (List.append model.layout [ 1 ]))
-                    , style [ ( "right", "0" ), ( "width", "100%" ) ]
+                    , class [Round]
                     ]
                     [ text "+" ]
                 ]
