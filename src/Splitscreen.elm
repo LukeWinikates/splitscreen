@@ -12,7 +12,6 @@ import Splitscreen.Model exposing (Model, fromUrl, toUrl)
 
 -- TODO: test onload handler, feedback for failures to load
 -- TODO: make code generally cleaner
--- TODO: add close button
 -- TODO: harmonize different data structures for "layout" (list of ints, list of list of (int, int), string representation)
 -- TODO: add a "play" button that turns columns into a carousel (possibly using css animations)
 
@@ -99,6 +98,17 @@ appendToCol column modelLayout =
         )
         modelLayout
 
+removeFromCol column modelLayout =
+    List.indexedMap
+        (\index count ->
+            count
+                + if index == column then
+                    -1
+                  else
+                    0
+        )
+        modelLayout
+
 
 layoutView : Model -> List (List ( Int, Int )) -> Html Msg
 layoutView model layout =
@@ -118,34 +128,48 @@ layoutView model layout =
                                 )
                                 col
                             )
+                            [div []
                             [ button
+                                [ onClick (Layout (removeFromCol index model.layout))
+                                , style [( "width", "5em" ), ("display", "inline-block") ]
+                                ]
+                                [ text "-" ]
+                             , button
                                 [ onClick (Layout (appendToCol index model.layout))
-                                , style [ ( "bottom", "0" ), ( "width", "100%" ) ]
+                                , style [( "width", "5em" ) , ("display", "inline-block")]
                                 ]
                                 [ text "+" ]
+                            ]
                             ]
                         )
                 )
                 layout
             )
-            [ button
+            [div [] [ button
+                [ onClick (Layout (List.take ((List.length model.layout) - 1) model.layout ))
+                , style [ ( "right", "0" ), ("width", "100%")]
+                ]
+                [ text "-" ]
+                ,
+                button
                 [ onClick (Layout (List.append model.layout [ 1 ]))
-                , style [ ( "right", "0" ), ( "height", "100%" ), ( "height", "calc(100vh - 10px)")]
+                , style [ ( "right", "0" ), ("width", "100%")]
                 ]
                 [ text "+" ]
-            ]
+            ]]
         )
 
+styleTag = node "style"
+                       []
+                       [ text
+                           (".show-on-hover { transition: all 1s; background-color: transparent; color: transparent; }\n"
+                               ++ ".show-on-hover:hover { background-color: #ccc; color: #111 }"
+                           )
+                       ]
 
 view : Model -> Html Msg
 view model =
     div []
-        [ node "style"
-            []
-            [ text
-                (".show-on-hover { transition: all 1s; background-color: transparent; color: transparent; }\n"
-                    ++ ".show-on-hover:hover { background-color: #ccc; color: #111 }"
-                )
-            ]
+        [ styleTag
         , layoutView model (modelToLayout model)
         ]
