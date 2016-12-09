@@ -8,7 +8,7 @@ import List exposing (filter, head)
 import Maybe exposing (withDefault)
 import Dict exposing (toList)
 import Splitscreen.Model exposing (Model, appendToCol, fromUrl, key, modelToLayout, removeFromCol, toUrl, urlFor)
-import Css exposing (Mixin, absolute, backgroundColor, block, margin, border, borderColor, borderRadius, color, display, focus, height, hex, hover, none, pct, position, property, pt, px, stylesheet, textDecoration, transparent, width, (.), cursor, pointer, inlineBlock ,     textAlign ,center ,    fontSize)
+import Css exposing (Mixin, absolute, backgroundColor, block, margin, padding, border, borderColor, borderRadius, color, display, focus, height, hex, hover, none, pct, position, property, pt, px, stylesheet, textDecoration, transparent, width, (.), cursor, pointer, inlineBlock ,     textAlign ,center ,    fontSize, top, left)
 import Css.Namespace exposing (namespace)
 import Css.Helpers
 import Html.CssHelpers
@@ -64,6 +64,7 @@ type CssClasses
     = UrlContent
     | ShowOnHover
     | Round
+    | UrlBar
 
 
 css =
@@ -98,6 +99,16 @@ css =
              , hover
                      [ backgroundColor (hex "ddd")]
             ]
+        , (.) UrlBar
+            [ top (pt 0)
+            , left (pt 0)
+            , textAlign center
+            , fontSize (pt 24)
+            , position absolute
+            , width (pct 100)
+            , border (pt 0)
+            , padding (pt 0)
+            ]
         ]
 
 
@@ -110,11 +121,10 @@ iframeView coord url =
     div [ style [ ( "position", "relative" ), ( "flex-grow", "1" ) ] ]
         [ iframe [ src url, class [ UrlContent ] ] []
         , input
-            [ class [ ShowOnHover ]
+            [ class [ ShowOnHover, UrlBar ]
             , placeholder "type a url here..."
             , value url
             , onInput (coord |> key |> Change)
-            , style [ ( "top", "0" ), ( "left", "0" ), ( "text-align", "center" ), ( "font-size", "24pt" ), ( "position", "absolute" ), ( "width", "100%" ), ( "border", "none" ), ( "padding", "0" ) ]
             ]
             []
         ]
