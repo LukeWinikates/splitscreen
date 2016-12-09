@@ -7,13 +7,14 @@ import Navigation
 import List exposing (filter, head)
 import Maybe exposing (withDefault)
 import Dict exposing (toList)
-import Splitscreen.Model exposing (Model, appendToCol, fromUrl, modelToLayout, removeFromCol, toUrl)
+import Splitscreen.Model exposing (Model, appendToCol, fromUrl, key, modelToLayout, removeFromCol, toUrl, urlFor)
 
 
 -- TODO: test onload handler, feedback for failures to load
 -- TODO: make code generally cleaner
 -- TODO: harmonize different data structures for "layout" (list of ints, list of list of (int, int), string representation)
 -- TODO: add a "play" button that turns columns into a carousel (possibly using css animations)
+-- TODO: Make `urls` dictionary vs. UrlChange less confusing
 
 
 main =
@@ -38,19 +39,23 @@ type Msg
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    let wrap model = (model, model |> toUrl |> Navigation.modifyUrl) in
+    let
+        wrap model =
+            ( model, model |> toUrl |> Navigation.modifyUrl )
+    in
         case msg of
             Change key newContent ->
                 wrap { model | urls = Dict.insert key newContent model.urls }
+
             LayoutChange newLayout ->
                 wrap { model | layout = newLayout }
+
             UrlChange location ->
                 ( model, Cmd.none )
 
 
-
-iframeView : String -> String -> Html Msg
-iframeView key url =
+iframeView : ( Int, Int ) -> String -> Html Msg
+iframeView coord url =
     let
         positioning =
             [ ( "border", "none" ), ( "width", "100%" ), ( "height", "100%" ), ( "display", "block" ), ( "position", "absolute" ) ]
@@ -61,7 +66,7 @@ iframeView key url =
                 [ class "show-on-hover"
                 , placeholder "type a url here..."
                 , value url
-                , onInput (Change key)
+                , onInput (coord |> key |> Change)
                 , style [ ( "top", "0" ), ( "left", "0" ), ( "text-align", "center" ), ( "font-size", "24pt" ), ( "position", "absolute" ), ( "width", "100%" ), ( "border", "none" ), ( "padding", "0" ) ]
                 ]
                 []
@@ -77,53 +82,51 @@ layoutView model layout =
                     span [ style [ ( "flex-grow", "1" ), ( "display", "flex" ), ( "flex-direction", "column" ), ( "height", "calc(100vh - 10px)" ) ] ]
                         (List.append
                             (List.map
-                                (\( x, y ) ->
-                                    let
-                                        key =
-                                            "x" ++ toString x ++ "y" ++ toString y
-                                    in
-                                        iframeView key (withDefault "" (Dict.get key model.urls))
-                                )
+                                (\xy -> iframeView xy (urlFor model xy))
                                 col
                             )
-                            [div []
-                            [ button
-                                [ onClick (LayoutChange (removeFromCol index model.layout))
-                                , style [( "width", "5em" ), ("display", "inline-block") ]
+                            [ div []
+                                [ button
+                                    [ onClick (LayoutChange (removeFromCol index model.layout))
+                                    , style [ ( "width", "5em" ), ( "display", "inline-block" ) ]
+                                    ]
+                                    [ text "-" ]
+                                , button
+                                    [ onClick (LayoutChange (appendToCol index model.layout))
+                                    , style [ ( "width", "5em" ), ( "display", "inline-block" ) ]
+                                    ]
+                                    [ text "+" ]
                                 ]
-                                [ text "-" ]
-                             , button
-                                [ onClick (LayoutChange (appendToCol index model.layout))
-                                , style [( "width", "5em" ) , ("display", "inline-block")]
-                                ]
-                                [ text "+" ]
-                            ]
                             ]
                         )
                 )
                 layout
             )
-            [div [] [ button
-                [ onClick (LayoutChange (List.take ((List.length model.layout) - 1) model.layout ))
-                , style [ ( "right", "0" ), ("width", "100%")]
+            [ div []
+                [ button
+                    [ onClick (LayoutChange (List.take ((List.length model.layout) - 1) model.layout))
+                    , style [ ( "right", "0" ), ( "width", "100%" ) ]
+                    ]
+                    [ text "-" ]
+                , button
+                    [ onClick (LayoutChange (List.append model.layout [ 1 ]))
+                    , style [ ( "right", "0" ), ( "width", "100%" ) ]
+                    ]
+                    [ text "+" ]
                 ]
-                [ text "-" ]
-                ,
-                button
-                [ onClick (LayoutChange (List.append model.layout [ 1 ]))
-                , style [ ( "right", "0" ), ("width", "100%")]
-                ]
-                [ text "+" ]
-            ]]
+            ]
         )
 
-styleTag = node "style"
-                       []
-                       [ text
-                           (".show-on-hover { transition: all 1s; background-color: transparent; color: transparent; }\n"
-                               ++ ".show-on-hover:hover { background-color: #ccc; color: #111 }"
-                           )
-                       ]
+
+styleTag =
+    node "style"
+        []
+        [ text
+            (".show-on-hover { transition: all 1s; background-color: transparent; color: transparent; }\n"
+                ++ ".show-on-hover:hover { background-color: #ccc; color: #111 }"
+            )
+        ]
+
 
 view : Model -> Html Msg
 view model =

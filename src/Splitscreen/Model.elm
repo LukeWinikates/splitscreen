@@ -7,7 +7,7 @@ import Dict exposing (Dict, fromList, toList)
 import Http
 
 
-valueFromQueryString : String -> String -> String
+valueFromQueryString : String -> String -> Maybe String
 valueFromQueryString key queryString =
     queryString
         |> dropLeft (length "#?")
@@ -16,13 +16,12 @@ valueFromQueryString key queryString =
         |> head
         |> Maybe.map (dropLeft ((String.length key) + 1))
         |> Maybe.map Http.decodeUri
-        |> Maybe.map (withDefault "") -- TODO: remove these withdefaults and let it be a maybe?, then have fromUrl do the defaulting
-        |> withDefault "11"
+        |> Maybe.map (withDefault "")
 
 
-parseLayout : String -> List Int
+parseLayout : Maybe String -> Maybe (List Int)
 parseLayout =
-    String.toList >> List.map (String.fromChar >> String.toInt >> (Result.withDefault 0))
+    Maybe.map (String.toList >> List.map (String.fromChar >> String.toInt >> (Result.withDefault 0)))
 
 
 tupleFromSplitting s =
@@ -51,7 +50,7 @@ parseUrls queryString =
 
 fromUrl : String -> Model
 fromUrl s =
-    { layout = parseLayout <| valueFromQueryString "layout" s
+    { layout = (withDefault [ 1, 1 ]) <| parseLayout <| valueFromQueryString "layout" s
     , urls = parseUrls s
     }
 
@@ -87,6 +86,8 @@ newModel : Model
 newModel =
     { layout = [ 1, 1 ], urls = Dict.empty }
 
+
+
 --type alias Layout = List List (Int, Int)
 
 
@@ -95,6 +96,7 @@ modelToLayout model =
     List.indexedMap
         (\colNum rowCount -> List.map ((,) colNum) (List.range 0 (rowCount - 1)))
         model.layout
+
 
 appendToCol column modelLayout =
     List.indexedMap
@@ -107,6 +109,7 @@ appendToCol column modelLayout =
         )
         modelLayout
 
+
 removeFromCol column modelLayout =
     List.indexedMap
         (\index count ->
@@ -117,3 +120,13 @@ removeFromCol column modelLayout =
                     0
         )
         modelLayout
+
+
+key : ( Int, Int ) -> String
+key ( x, y ) =
+    "x" ++ toString x ++ "y" ++ toString y
+
+
+urlFor : Model -> ( Int, Int ) -> String
+urlFor model xy =
+    withDefault "" (Dict.get (key xy) model.urls)

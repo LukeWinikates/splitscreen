@@ -20,8 +20,8 @@ all =
             , test "parsing the layout" <|
                 \() ->
                     Expect.equal
-                        [ 1, 2, 1 ]
-                        (parseLayout "121")
+                        (Just [ 1, 2, 1 ])
+                        (parseLayout (Just "121"))
             ]
         , describe "encoding"
             [ test "encoding the model as a url" <|
