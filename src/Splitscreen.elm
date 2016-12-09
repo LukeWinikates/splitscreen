@@ -38,25 +38,14 @@ type Msg
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    case msg of
-        Change key newContent ->
-            let
-                newModel =
-                    { model | urls = Dict.insert key newContent model.urls }
-            in
-                ( newModel, Navigation.modifyUrl (toUrl newModel) )
-
-        Layout newLayout ->
-            let
-                newModel =
-                    { model | layout = newLayout }
-            in
-                ( newModel, Navigation.modifyUrl (toUrl newModel) )
-
-        UrlChange location ->
-            ( model, Cmd.none )
-
-
+    let wrap model = (model, (model |> toUrl |> Navigation.modifyUrl)) in
+        case msg of
+            Change key newContent ->
+                wrap { model | urls = Dict.insert key newContent model.urls }
+            Layout newLayout ->
+                wrap { model | layout = newLayout }
+            UrlChange location ->
+                ( model, Cmd.none )
 
 --type alias Layout = List List (Int, Int)
 
