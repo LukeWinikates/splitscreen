@@ -10,14 +10,11 @@ import Dict exposing (toList)
 import Css.Namespace exposing (namespace)
 import Css.Helpers
 import Html.CssHelpers
-
 import Splitscreen.Model exposing (Model, appendToCol, fromUrl, key, modelToLayout, removeFromCol, toUrl, urlFor)
 import Splitscreen.Style exposing (..)
 
 
 -- TODO: test onload handler, feedback for failures to load
--- TODO: make code generally cleaner
--- TODO: harmonize different data structures for "layout" (list of ints, list of list of (int, int), string representation)
 -- TODO: add a "play" button that turns columns into a carousel (possibly using css animations)
 -- TODO: Make `urls` dictionary vs. UrlChange less confusing
 -- TODO: improve the spacing of the -/+ buttons. The top/bottom margin is uneven on the ones under the columns.
@@ -63,50 +60,66 @@ update msg model =
                 ( model, Cmd.none )
 
 
+type alias GridPosition =
+    ( Int, Int )
+
 
 iframeView : ( Int, Int ) -> String -> Html Msg
-iframeView coord url =
+iframeView gridPosition url =
     div [ class [ Row ] ]
         [ iframe [ src url, class [ UrlContent ] ] []
         , input
             [ class [ ShowOnHover, UrlBar ]
             , placeholder "type a url here..."
             , value url
-            , onInput (coord |> key |> Change)
+            , onInput (gridPosition |> key |> Change)
             ]
             []
         ]
 
 
-layoutView : Model -> List (List ( Int, Int )) -> Html Msg
-layoutView model layout =
+type alias GridLayout =
+    List (List GridPosition)
+
+
+rowViews : Model -> List GridPosition -> List (Html Msg)
+rowViews model positions =
+    List.map
+        (\gridPosition -> iframeView gridPosition (urlFor model gridPosition))
+        positions
+
+
+columnViews : Model -> GridLayout -> List (Html Msg)
+columnViews model layout =
+    (List.indexedMap
+        (\columnIndex positionsForColumn ->
+            span [ class [ RowGrid ] ]
+                (List.append
+                    (rowViews model positionsForColumn)
+                    [ div []
+                        [ a
+                            [ onClick (LayoutChange (removeFromCol columnIndex model.layout))
+                            , class [ Round ]
+                            ]
+                            [ text "-" ]
+                        , a
+                            [ onClick (LayoutChange (appendToCol columnIndex model.layout))
+                            , class [ Round ]
+                            ]
+                            [ text "+" ]
+                        ]
+                    ]
+                )
+        )
+        layout
+    )
+
+
+gridView : Model -> GridLayout -> Html Msg
+gridView model layout =
     div [ class [ ColumnGrid ] ]
         (List.append
-            (List.indexedMap
-                (\index col ->
-                    span [class [ RowGrid ]]
-                        (List.append
-                            (List.map
-                                (\xy -> iframeView xy (urlFor model xy))
-                                col
-                            )
-                            [ div []
-                                [ a
-                                    [ onClick (LayoutChange (removeFromCol index model.layout))
-                                    , class [ Round ]
-                                    ]
-                                    [ text "-" ]
-                                , a
-                                    [ onClick (LayoutChange (appendToCol index model.layout))
-                                    , class [ Round ]
-                                    ]
-                                    [ text "+" ]
-                                ]
-                            ]
-                        )
-                )
-                layout
-            )
+            (columnViews model layout)
             [ div [ style [ ( "width", "25px" ) ] ]
                 [ a
                     [ onClick (LayoutChange (List.take ((List.length model.layout) - 1) model.layout))
@@ -127,5 +140,5 @@ view : Model -> Html Msg
 view model =
     div []
         [ node "style" [] [ text Splitscreen.Style.compiled ]
-        , layoutView model (modelToLayout model)
+        , gridView model (modelToLayout model)
         ]
