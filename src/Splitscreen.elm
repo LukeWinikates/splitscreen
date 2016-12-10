@@ -22,6 +22,9 @@ import Html.CssHelpers
 -- TODO: improve the spacing of the -/+ buttons. The top/bottom margin is uneven on the ones under the columns.
 --      ... could count pixels, but don't want to tightly couple it to the calc(100% - 20px) for the column height
 -- TODO: probably move CSS into its own module, if only because Css and Html imports don't play well together
+-- TODO: if there's no layout, show help text about what this does and how it works
+-- TODO: if there's one column and no value for x0y0, call attention to typing stuff in
+
 
 main =
     Navigation.program UrlChange
