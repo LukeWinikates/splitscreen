@@ -4,6 +4,7 @@ import Css exposing (..)
 import Css.Namespace exposing (namespace)
 import Html.CssHelpers
 
+
 type CssClasses
     = UrlContent
     | ShowOnHover
@@ -12,6 +13,7 @@ type CssClasses
     | ColumnGrid
     | RowGrid
     | Row
+
 
 css =
     (stylesheet << namespace "splitscreen")
@@ -76,4 +78,6 @@ css =
 { id, class, classList } =
     Html.CssHelpers.withNamespace "splitscreen"
 
-compiled = (.css (Css.compile [ css ]))
+
+compiled =
+    (.css (Css.compile [ css ]))
