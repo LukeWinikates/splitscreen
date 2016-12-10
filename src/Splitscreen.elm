@@ -8,7 +8,7 @@ import List exposing (filter, head)
 import Maybe exposing (withDefault)
 import Dict exposing (toList)
 import Splitscreen.Model exposing (Model, appendToCol, fromUrl, key, modelToLayout, removeFromCol, toUrl, urlFor)
-import Css exposing (Mixin, absolute, backgroundColor, block, margin, padding, border, borderColor, borderRadius, color, display, focus, height, hex, hover, none, pct, position, property, pt, px, stylesheet, textDecoration, transparent, width, (.), cursor, pointer, inlineBlock ,     textAlign ,center ,    fontSize, top, left)
+import Css exposing (Mixin, absolute, int, relative, backgroundColor, block, border, borderColor, borderRadius, borderRight3, center, color, cursor, display, displayFlex, focus, fontSize, height, hex, hover, inlineBlock, left, margin, none, padding, pct, pointer, position, property, pt, px, solid, stylesheet, textAlign, textDecoration, top, transparent, vw, width, (.), flexGrow, flexDirection, column)
 import Css.Namespace exposing (namespace)
 import Css.Helpers
 import Html.CssHelpers
@@ -68,6 +68,9 @@ type CssClasses
     | ShowOnHover
     | Round
     | UrlBar
+    | ColumnGrid
+    | RowGrid
+    | Row
 
 
 css =
@@ -94,13 +97,13 @@ css =
             , height (px 25)
             , width (px 25)
             , backgroundColor (hex "ccc")
-            , focus [textDecoration none]
+            , focus [ textDecoration none ]
             , cursor pointer
-            ,    display inlineBlock
-            ,     textAlign center
-             ,    fontSize (px 20)
-             , hover
-                     [ backgroundColor (hex "ddd")]
+            , display inlineBlock
+            , textAlign center
+            , fontSize (px 20)
+            , hover
+                [ backgroundColor (hex "ddd") ]
             ]
         , (.) UrlBar
             [ top (pt 0)
@@ -112,6 +115,21 @@ css =
             , border (pt 0)
             , padding (pt 0)
             ]
+        , (.) ColumnGrid
+            [ displayFlex
+            , borderRight3 (px 1) solid (hex "eee")
+            , property "width" "calc(100vw - 10px)"
+            ]
+        , (.) RowGrid
+            [ flexGrow (int 1)
+            , displayFlex
+            , flexDirection column
+            , property "height" "calc(100vh - 10px)"
+            ]
+        , (.) Row
+            [ position relative
+            , flexGrow (int 1)
+            ]
         ]
 
 
@@ -121,7 +139,7 @@ css =
 
 iframeView : ( Int, Int ) -> String -> Html Msg
 iframeView coord url =
-    div [ style [ ( "position", "relative" ), ( "flex-grow", "1" ) ] ]
+    div [ class [ Row ] ]
         [ iframe [ src url, class [ UrlContent ] ] []
         , input
             [ class [ ShowOnHover, UrlBar ]
@@ -135,25 +153,25 @@ iframeView coord url =
 
 layoutView : Model -> List (List ( Int, Int )) -> Html Msg
 layoutView model layout =
-    div [ style [ ( "display", "flex" ), ( "border-right", "1px solid white" ), ( "width", "calc(100vw - 10px)" ) ] ]
+    div [ class [ ColumnGrid ] ]
         (List.append
             (List.indexedMap
                 (\index col ->
-                    span [ style [ ( "flex-grow", "1" ), ( "display", "flex" ), ( "flex-direction", "column" ), ( "height", "calc(100vh - 10px)" ) ] ]
+                    span [class [ RowGrid ]]
                         (List.append
                             (List.map
                                 (\xy -> iframeView xy (urlFor model xy))
                                 col
                             )
-                            [ div [style [("vertical-align", "center")]]
+                            [ div []
                                 [ a
                                     [ onClick (LayoutChange (removeFromCol index model.layout))
-                                    , class [Round]
+                                    , class [ Round ]
                                     ]
                                     [ text "-" ]
                                 , a
                                     [ onClick (LayoutChange (appendToCol index model.layout))
-                                    , class [Round]
+                                    , class [ Round ]
                                     ]
                                     [ text "+" ]
                                 ]
@@ -162,15 +180,15 @@ layoutView model layout =
                 )
                 layout
             )
-            [ div [style [("width", "25px")]]
+            [ div [ style [ ( "width", "25px" ) ] ]
                 [ a
                     [ onClick (LayoutChange (List.take ((List.length model.layout) - 1) model.layout))
-                    , class [Round]
+                    , class [ Round ]
                     ]
                     [ text "-" ]
                 , a
                     [ onClick (LayoutChange (List.append model.layout [ 1 ]))
-                    , class [Round]
+                    , class [ Round ]
                     ]
                     [ text "+" ]
                 ]
@@ -181,6 +199,6 @@ layoutView model layout =
 view : Model -> Html Msg
 view model =
     div []
-        [ node "style" [] [ text (.css (Css.compile [ css ]))]
+        [ node "style" [] [ text (.css (Css.compile [ css ])) ]
         , layoutView model (modelToLayout model)
         ]
