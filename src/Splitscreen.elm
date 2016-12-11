@@ -14,9 +14,6 @@ import Splitscreen.Model exposing (Model, appendToCol, fromUrl, key, modelToLayo
 import Splitscreen.Style exposing (..)
 
 
--- TODO: test onload handler, feedback for failures to load
--- TODO: add a "play" button that turns columns into a carousel (possibly using css animations)
--- TODO: Make `urls` dictionary vs. UrlChange less confusing
 -- TODO: improve the spacing of the -/+ buttons. The top/bottom margin is uneven on the ones under the columns.
 --      ... could count pixels, but don't want to tightly couple it to the calc(100% - 20px) for the column height
 -- TODO: if there's no layout, show help text about what this does and how it works
