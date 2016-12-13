@@ -1,6 +1,7 @@
 module Splitscreen.Style exposing (..)
 
 import Css exposing (..)
+import Css.Elements exposing (body)
 import Css.Namespace exposing (namespace)
 import Html.CssHelpers
 
@@ -13,11 +14,16 @@ type CssClasses
     | ColumnGrid
     | RowGrid
     | Row
+    | Prose
 
 
 css =
     (stylesheet << namespace "splitscreen")
-        [ (.) UrlContent
+        [ body
+            [ fontFamily sansSerif
+            , color (hex "aaa")
+            ]
+        , (.) UrlContent
             [ border (pt 0)
             , width (pct 100)
             , height (pct 100)
@@ -34,10 +40,11 @@ css =
         , (.) Round
             [ borderRadius (pct 100)
             , property "transition" "background-color .3s"
-            , margin (px 1)
+            , margin (px 4)
             , borderColor (hex "111")
             , height (px 25)
             , width (px 25)
+
             , backgroundColor (hex "ccc")
             , focus [ textDecoration none ]
             , cursor pointer
@@ -45,7 +52,10 @@ css =
             , textAlign center
             , fontSize (px 20)
             , hover
-                [ backgroundColor (hex "ddd") ]
+                [ backgroundColor (hex "f4427a")
+                , color (hex "111")
+                , fontWeight bold
+                ]
             ]
         , (.) UrlBar
             [ top (pt 0)
@@ -55,22 +65,29 @@ css =
             , position absolute
             , width (pct 100)
             , border (pt 0)
-            , padding (pt 0)
+            , padding2 (pt 4) (pt 0)
+            , focus
+                [ outline none
+                ]
             ]
         , (.) ColumnGrid
             [ displayFlex
             , borderRight3 (px 1) solid (hex "eee")
-            , property "width" "calc(100vw - 10px)"
             ]
         , (.) RowGrid
             [ flexGrow (int 1)
             , displayFlex
             , flexDirection column
-            , property "height" "calc(100vh - 10px)"
+            , height (vh 100)
             ]
         , (.) Row
             [ position relative
             , flexGrow (int 1)
+            ]
+        , (.) Prose
+            [ fontSize (pt 20)
+            , maxWidth (pct 100)
+            , textAlign center
             ]
         ]
 

@@ -50,7 +50,7 @@ parseUrls queryString =
 
 fromUrl : String -> Model
 fromUrl s =
-    { layout = (withDefault [ 1, 1 ]) <| parseLayout <| valueFromQueryString "layout" s
+    { layout = (withDefault []) <| parseLayout <| valueFromQueryString "layout" s
     , urls = parseUrls s
     }
 
@@ -84,11 +84,7 @@ type alias Model =
 
 newModel : Model
 newModel =
-    { layout = [ 1, 1 ], urls = Dict.empty }
-
-
-
---type alias Layout = List List (Int, Int)
+    { layout = [], urls = Dict.empty }
 
 
 modelToLayout : Model -> List (List ( Int, Int ))

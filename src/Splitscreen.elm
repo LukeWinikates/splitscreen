@@ -1,6 +1,6 @@
 module Splitscreen exposing (..)
 
-import Html exposing (Attribute, Html, a, body, button, div, form, h1, header, iframe, input, li, node, span, text, textarea, ul)
+import Html exposing (..)
 import Html.Attributes exposing (href, placeholder, src, style, value)
 import Html.Events exposing (onInput, onClick, onSubmit, onMouseOver)
 import Navigation
@@ -10,14 +10,13 @@ import Dict exposing (toList)
 import Css.Namespace exposing (namespace)
 import Css.Helpers
 import Html.CssHelpers
-import Splitscreen.Model exposing (Model, appendToCol, fromUrl, key, modelToLayout, removeFromCol, toUrl, urlFor)
+import Splitscreen.Model exposing (..)
 import Splitscreen.Style exposing (..)
 
 
 -- TODO: improve the spacing of the -/+ buttons. The top/bottom margin is uneven on the ones under the columns.
 --      ... could count pixels, but don't want to tightly couple it to the calc(100% - 20px) for the column height
--- TODO: if there's no layout, show help text about what this does and how it works
--- TODO: if there's one column and no value for x0y0, call attention to typing stuff in
+-- TODO: hide - buttons if there's only 1 column. disable/hide (+) if there are 4 rows or 4 columns
 
 
 main =
@@ -88,28 +87,33 @@ rowViews model positions =
 
 columnViews : Model -> GridLayout -> List (Html Msg)
 columnViews model layout =
-    (List.indexedMap
-        (\columnIndex positionsForColumn ->
-            span [ class [ RowGrid ] ]
-                (List.append
-                    (rowViews model positionsForColumn)
-                    [ div []
-                        [ a
-                            [ onClick (LayoutChange (removeFromCol columnIndex model.layout))
-                            , class [ Round ]
+    case layout of
+        [] ->
+            [ basicTutorial ]
+
+        _ ->
+            (List.indexedMap
+                (\columnIndex positionsForColumn ->
+                    span [ class [ RowGrid ] ]
+                        (List.append
+                            (rowViews model positionsForColumn)
+                            [ div []
+                                [ a
+                                    [ onClick (LayoutChange (removeFromCol columnIndex model.layout))
+                                    , class [ Round ]
+                                    ]
+                                    [ text "-" ]
+                                , a
+                                    [ onClick (LayoutChange (appendToCol columnIndex model.layout))
+                                    , class [ Round ]
+                                    ]
+                                    [ text "+" ]
+                                ]
                             ]
-                            [ text "-" ]
-                        , a
-                            [ onClick (LayoutChange (appendToCol columnIndex model.layout))
-                            , class [ Round ]
-                            ]
-                            [ text "+" ]
-                        ]
-                    ]
+                        )
                 )
-        )
-        layout
-    )
+                layout
+            )
 
 
 gridView : Model -> GridLayout -> Html Msg
@@ -117,20 +121,36 @@ gridView model layout =
     div [ class [ ColumnGrid ] ]
         (List.append
             (columnViews model layout)
-            [ div [ style [ ( "width", "25px" ) ] ]
+            [ div []
                 [ a
-                    [ onClick (LayoutChange (List.take ((List.length model.layout) - 1) model.layout))
+                    [ style [("display", "block")]
+                    , onClick (LayoutChange (List.take ((List.length model.layout) - 1) model.layout))
                     , class [ Round ]
                     ]
                     [ text "-" ]
                 , a
-                    [ onClick (LayoutChange (List.append model.layout [ 1 ]))
+                    [ style [("display", "block")]
+                    , onClick (LayoutChange (List.append model.layout [ 1 ]))
                     , class [ Round ]
                     ]
                     [ text "+" ]
                 ]
             ]
         )
+
+
+basicTutorial : Html Msg
+basicTutorial =
+    div [ class [ RowGrid, Prose ] ]
+        [ h1 [] [ text "Splitscreen" ]
+        , div [] [ text "Show multiple information radiator pages in one browser tab" ]
+        , div [] [ text "or make a mosaic of images, gifs, or static content" ]
+        , p [] [ text "Click the (+) button on the right to add a column with one row" ]
+--        , p []
+--            [ span [] [ text "or try these examples: " ]
+--            , a [] [ text "" ]
+--            ]
+        ]
 
 
 view : Model -> Html Msg
