@@ -77,7 +77,7 @@ toUrl model =
 
 
 type alias Model =
-    { layout : List Int
+    { layout : Layout
     , urls : Dict String String
     }
 
@@ -94,30 +94,6 @@ modelToLayout model =
         model.layout
 
 
-appendToCol column modelLayout =
-    List.indexedMap
-        (\index count ->
-            count
-                + if index == column then
-                    1
-                  else
-                    0
-        )
-        modelLayout
-
-
-removeFromCol column modelLayout =
-    List.indexedMap
-        (\index count ->
-            count
-                + if index == column then
-                    -1
-                  else
-                    0
-        )
-        modelLayout
-
-
 key : ( Int, Int ) -> String
 key ( x, y ) =
     "x" ++ toString x ++ "y" ++ toString y
@@ -126,3 +102,59 @@ key ( x, y ) =
 urlFor : Model -> ( Int, Int ) -> String
 urlFor model xy =
     withDefault "" (Dict.get (key xy) model.urls)
+
+
+mutateColumn : (Int -> Int) -> Int -> Layout -> Layout
+mutateColumn transform columnIndex layout =
+    (List.indexedMap
+        (\index count ->
+            if index == columnIndex then
+                (transform count)
+            else
+                count
+        )
+        layout
+    )
+
+
+atColumnIndex : Int -> Layout -> Int
+atColumnIndex columnIndex layout =
+    List.drop columnIndex layout |> head |> withDefault 0
+
+
+canAddRow : Int -> Layout -> Bool
+canAddRow columnIndex layout =
+    (atColumnIndex columnIndex layout) < 4
+
+
+canRemoveRow : Int -> Layout -> Bool
+canRemoveRow columnIndex layout =
+    (atColumnIndex columnIndex layout) > 1
+
+
+type alias Layout =
+    List Int
+
+
+type alias LayoutMutation =
+    { predicate : Layout -> Bool, map : Layout -> Layout }
+
+
+addColumn : LayoutMutation
+addColumn =
+    { predicate = \layout -> ((List.length layout) <= 4), map = \layout -> (List.append layout [ 1 ]) }
+
+
+removeColumn : LayoutMutation
+removeColumn =
+    { predicate = \layout -> ((List.length layout) > 0), map = \layout -> (List.take ((List.length layout) - 1) layout) }
+
+
+addRow : Int -> LayoutMutation
+addRow columnIndex =
+    { predicate = canAddRow columnIndex, map = (mutateColumn ((+) 1)) columnIndex }
+
+
+removeRow : Int -> LayoutMutation
+removeRow columnIndex =
+    { predicate = canRemoveRow columnIndex, map = mutateColumn ((+) -1) columnIndex }

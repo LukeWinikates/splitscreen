@@ -15,6 +15,8 @@ type CssClasses
     | RowGrid
     | Row
     | Prose
+    | Disabled
+    | Enabled
 
 
 css =
@@ -44,7 +46,6 @@ css =
             , borderColor (hex "111")
             , height (px 25)
             , width (px 25)
-
             , backgroundColor (hex "ccc")
             , focus [ textDecoration none ]
             , cursor pointer

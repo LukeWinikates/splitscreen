@@ -1,7 +1,7 @@
 module Splitscreen exposing (..)
 
 import Html exposing (..)
-import Html.Attributes exposing (href, placeholder, src, style, value)
+import Html.Attributes exposing (disabled, href, placeholder, src, style, value)
 import Html.Events exposing (onInput, onClick, onSubmit, onMouseOver)
 import Navigation
 import List exposing (filter, head)
@@ -14,10 +14,8 @@ import Splitscreen.Model exposing (..)
 import Splitscreen.Style exposing (..)
 
 
--- TODO: improve the spacing of the -/+ buttons. The top/bottom margin is uneven on the ones under the columns.
---      ... could count pixels, but don't want to tightly couple it to the calc(100% - 20px) for the column height
--- TODO: hide - buttons if there's only 1 column. disable/hide (+) if there are 4 rows or 4 columns
-
+-- TODO: give visual feedback about disabled buttons
+-- TODO: provide some entertaining getting-started layouts
 
 main =
     Navigation.program UrlChange
@@ -78,6 +76,37 @@ type alias GridLayout =
     List (List GridPosition)
 
 
+circleButton : String -> List ( String, String ) -> LayoutMutation -> Layout -> Html Msg
+circleButton icon styles mutation layout =
+    a
+        [ style styles
+        , onClick
+            (LayoutChange
+                (if (mutation.predicate layout) then
+                    (mutation.map layout)
+                 else
+                    layout
+                )
+            )
+        , class
+            [ Round
+            , if mutation.predicate layout then
+                Disabled
+              else
+                Enabled
+            ]
+        ]
+        [ text icon ]
+
+
+addButton =
+    circleButton "+"
+
+
+removeButton =
+    circleButton "-"
+
+
 rowViews : Model -> List GridPosition -> List (Html Msg)
 rowViews model positions =
     List.map
@@ -98,16 +127,8 @@ columnViews model layout =
                         (List.append
                             (rowViews model positionsForColumn)
                             [ div []
-                                [ a
-                                    [ onClick (LayoutChange (removeFromCol columnIndex model.layout))
-                                    , class [ Round ]
-                                    ]
-                                    [ text "-" ]
-                                , a
-                                    [ onClick (LayoutChange (appendToCol columnIndex model.layout))
-                                    , class [ Round ]
-                                    ]
-                                    [ text "+" ]
+                                [ removeButton [] (removeRow columnIndex) model.layout
+                                , addButton [] (addRow columnIndex) model.layout
                                 ]
                             ]
                         )
@@ -122,18 +143,8 @@ gridView model layout =
         (List.append
             (columnViews model layout)
             [ div []
-                [ a
-                    [ style [("display", "block")]
-                    , onClick (LayoutChange (List.take ((List.length model.layout) - 1) model.layout))
-                    , class [ Round ]
-                    ]
-                    [ text "-" ]
-                , a
-                    [ style [("display", "block")]
-                    , onClick (LayoutChange (List.append model.layout [ 1 ]))
-                    , class [ Round ]
-                    ]
-                    [ text "+" ]
+                [ removeButton [ ( "display", "block" ) ] removeColumn model.layout
+                , addButton [ ( "display", "block" ) ] addColumn model.layout
                 ]
             ]
         )
@@ -146,10 +157,10 @@ basicTutorial =
         , div [] [ text "Show multiple information radiator pages in one browser tab" ]
         , div [] [ text "or make a mosaic of images, gifs, or static content" ]
         , p [] [ text "Click the (+) button on the right to add a column with one row" ]
---        , p []
---            [ span [] [ text "or try these examples: " ]
---            , a [] [ text "" ]
---            ]
+          --        , p []
+          --            [ span [] [ text "or try these examples: " ]
+          --            , a [] [ text "" ]
+          --            ]
         ]
 
 
