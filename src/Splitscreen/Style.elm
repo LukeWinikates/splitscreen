@@ -15,6 +15,7 @@ type CssClasses
     | RowGrid
     | Row
     | Prose
+    | ButtonColumn
     | Disabled
     | Enabled
 
@@ -52,11 +53,18 @@ css =
             , display inlineBlock
             , textAlign center
             , fontSize (px 20)
-            , hover
+            ]
+        , (.) Enabled
+            [ hover
                 [ backgroundColor (hex "f4427a")
                 , color (hex "111")
                 , fontWeight bold
                 ]
+            ]
+        , (.) Disabled
+            [ cursor default
+            , backgroundColor (hex "eee")
+            , color (hex "ddd")
             ]
         , (.) UrlBar
             [ top (pt 0)
@@ -84,6 +92,12 @@ css =
         , (.) Row
             [ position relative
             , flexGrow (int 1)
+            ]
+        , (.) ButtonColumn
+            [ children
+                [ everything
+                    [ display block ]
+                ]
             ]
         , (.) Prose
             [ fontSize (pt 20)

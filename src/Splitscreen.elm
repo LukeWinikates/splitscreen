@@ -14,8 +14,9 @@ import Splitscreen.Model exposing (..)
 import Splitscreen.Style exposing (..)
 
 
--- TODO: give visual feedback about disabled buttons
 -- TODO: provide some entertaining getting-started layouts
+-- TODO: transition for folding down the tutorial panel -- maybe animate its width down to zero so that it folds away when the new one is added
+
 
 main =
     Navigation.program UrlChange
@@ -76,11 +77,10 @@ type alias GridLayout =
     List (List GridPosition)
 
 
-circleButton : String -> List ( String, String ) -> LayoutMutation -> Layout -> Html Msg
-circleButton icon styles mutation layout =
+circleButton : String -> LayoutMutation -> Layout -> Html Msg
+circleButton icon mutation layout =
     a
-        [ style styles
-        , onClick
+        [ onClick
             (LayoutChange
                 (if (mutation.predicate layout) then
                     (mutation.map layout)
@@ -91,9 +91,9 @@ circleButton icon styles mutation layout =
         , class
             [ Round
             , if mutation.predicate layout then
-                Disabled
-              else
                 Enabled
+              else
+                Disabled
             ]
         ]
         [ text icon ]
@@ -127,8 +127,8 @@ columnViews model layout =
                         (List.append
                             (rowViews model positionsForColumn)
                             [ div []
-                                [ removeButton [] (removeRow columnIndex) model.layout
-                                , addButton [] (addRow columnIndex) model.layout
+                                [ removeButton (removeRow columnIndex) model.layout
+                                , addButton (addRow columnIndex) model.layout
                                 ]
                             ]
                         )
@@ -142,9 +142,9 @@ gridView model layout =
     div [ class [ ColumnGrid ] ]
         (List.append
             (columnViews model layout)
-            [ div []
-                [ removeButton [ ( "display", "block" ) ] removeColumn model.layout
-                , addButton [ ( "display", "block" ) ] addColumn model.layout
+            [ div [ class [ ButtonColumn ] ]
+                [ removeButton removeColumn model.layout
+                , addButton addColumn model.layout
                 ]
             ]
         )
